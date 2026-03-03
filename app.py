@@ -8,7 +8,7 @@ app = Flask(__name__)
 
 ANALYTICS_FILE = "analytics_data.json"
 
-# Load analytics if exists
+# ---------------- LOAD ANALYTICS ----------------
 if os.path.exists(ANALYTICS_FILE):
     with open(ANALYTICS_FILE, "r") as f:
         data = json.load(f)
@@ -34,21 +34,32 @@ def save_analytics():
             "user_stats": user_stats
         }, f)
 
+# ---------------- WORD LISTS ----------------
+
 MILD_WORDS = [
-    "stupid", "idiot", "fool", "dumb",
-    "asshole", "bastard", "mf"
+    "stupid","destroy","eradicate","decimate","idiot","fool","dumb","useless","loser","crazy","mad","annoying","irritating",
+    "nonsense","pathetic","ridiculous","lazy","selfish","arrogant","childish","clown","fake","shameless",
+    "ignorant","weak","boring","rude","immature","silly","awkward","embarrassing","lame","trash",
+    "worthless","hopeless","brainless","careless","clueless","disgusting","unbelievable","horrible","terrible","bad",
+    "mean","jealous","dramatic","overreacting","stubborn","moody","messy","unreliable","slow","weird"
 ]
 
 EXTREME_WORDS = [
-    "fuck",
-    "motherfucker",
-    "asshole"
+    "fuck","fucker","motherfucker","fucking","shit","bullshit","bitch","bastard","asshole","dickhead",
+    "piss","slut","whore","cunt","retard","moron","jackass","scumbag","dipshit","jerk",
+    "wtf","stfu","suck","freak","nutcase","psycho","pervert","crap","douche","scum",
+    "filthy","garbage","kill you","shut up","get lost","piece of shit","son of a","dirty pig","ugly pig","low life",
+    "cheap trash","filthy animal","worthless trash","rotten","damn you","bloody hell","hate you","go to hell","screw you","trash bag"
 ]
+
+# ---------------- NORMALIZATION ----------------
 
 def normalize_text(text):
     text = text.lower()
-    text = re.sub(r'[^a-z]', '', text)
+    text = re.sub(r'[^a-z\s]', '', text)
     return text
+
+# ---------------- ANALYZE ROUTE ----------------
 
 @app.route("/analyze", methods=["POST"])
 def analyze():
@@ -70,17 +81,17 @@ def analyze():
     user_stats[username]["total"] += 1
 
     clean = normalize_text(message)
-    message_lower = message.lower()
 
-    mild_detected = [word for word in MILD_WORDS if word in message_lower]
+    mild_detected = [word for word in MILD_WORDS if word in clean]
     extreme_detected = [word for word in EXTREME_WORDS if word in clean]
 
     polarity = TextBlob(message).sentiment.polarity
 
-    # AUTO BLOCK
+    # -------- EXTREME AUTO BLOCK --------
     if extreme_detected:
         blocked_messages += 1
         toxic_messages += 1
+
         user_stats[username]["toxic"] += 1
         user_stats[username]["blocked"] += 1
 
@@ -95,6 +106,7 @@ def analyze():
             "suggestion": "BLOCKED"
         })
 
+    # -------- MILD / SENTIMENT --------
     toxic = bool(mild_detected) or polarity < -0.3
 
     if toxic:
@@ -117,6 +129,8 @@ def analyze():
         "suggestion": suggestion
     })
 
+# ---------------- ANALYTICS ROUTE ----------------
+
 @app.route("/analytics", methods=["GET"])
 def analytics():
     toxicity_percentage = (
@@ -133,7 +147,8 @@ def analytics():
         "user_stats": user_stats
     })
 
-# ✅ RESET ANALYTICS (Simple GET)
+# ---------------- RESET ROUTE ----------------
+
 @app.route("/reset", methods=["GET"])
 def reset():
     global total_messages, toxic_messages, blocked_messages
@@ -150,6 +165,8 @@ def reset():
     return jsonify({
         "status": "Analytics reset successful"
     })
+
+# ---------------- RUN APP ----------------
 
 if __name__ == "__main__":
     app.run()
