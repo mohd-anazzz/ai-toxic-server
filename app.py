@@ -8,7 +8,7 @@ app = Flask(__name__)
 
 ANALYTICS_FILE = "analytics_data.json"
 
-# Load analytics
+# Load analytics if exists
 if os.path.exists(ANALYTICS_FILE):
     with open(ANALYTICS_FILE, "r") as f:
         data = json.load(f)
@@ -34,8 +34,16 @@ def save_analytics():
             "user_stats": user_stats
         }, f)
 
-MILD_WORDS = ["stupid", "idiot", "fool", "dumb", "asshole", "bastard", "mf"]
-EXTREME_WORDS = ["fuck", "motherfucker", "asshole"]
+MILD_WORDS = [
+    "stupid", "idiot", "fool", "dumb",
+    "asshole", "bastard", "mf"
+]
+
+EXTREME_WORDS = [
+    "fuck",
+    "motherfucker",
+    "asshole"
+]
 
 def normalize_text(text):
     text = text.lower()
@@ -51,7 +59,6 @@ def analyze():
     message = data.get("message", "")
     username = data.get("username", "Unknown")
 
-    # Initialize user if not exists
     if username not in user_stats:
         user_stats[username] = {
             "total": 0,
@@ -70,11 +77,10 @@ def analyze():
 
     polarity = TextBlob(message).sentiment.polarity
 
-    # AUTO-BLOCK
+    # AUTO BLOCK
     if extreme_detected:
         blocked_messages += 1
         toxic_messages += 1
-
         user_stats[username]["toxic"] += 1
         user_stats[username]["blocked"] += 1
 
@@ -125,6 +131,24 @@ def analytics():
         "toxicity_percentage": round(toxicity_percentage, 2),
         "word_frequency": word_frequency,
         "user_stats": user_stats
+    })
+
+# ✅ RESET ANALYTICS (Simple GET)
+@app.route("/reset", methods=["GET"])
+def reset():
+    global total_messages, toxic_messages, blocked_messages
+    global word_frequency, user_stats
+
+    total_messages = 0
+    toxic_messages = 0
+    blocked_messages = 0
+    word_frequency = {}
+    user_stats = {}
+
+    save_analytics()
+
+    return jsonify({
+        "status": "Analytics reset successful"
     })
 
 if __name__ == "__main__":
