@@ -34,20 +34,30 @@ def save_analytics():
             "user_stats": user_stats
         }, f)
 
+# ---------------- 50 MILD WORDS ----------------
+
 MILD_WORDS = [
-    "stupid", "idiot", "fool", "dumb",
-    "asshole", "bastard", "mf"
+    "stupid","idiot","fool","dumb","useless","loser","crazy","mad","annoying","irritating",
+    "nonsense","pathetic","ridiculous","lazy","selfish","arrogant","childish","clown","fake","shameless",
+    "ignorant","weak","boring","rude","immature","silly","awkward","embarrassing","lame","trash",
+    "worthless","hopeless","brainless","careless","clueless","disgusting","unbelievable","horrible","terrible","bad",
+    "mean","jealous","dramatic","overreacting","stubborn","moody","messy","unreliable","slow","weird",
+    "destroy","decimate","eradicate"
 ]
 
+# ---------------- 50 EXTREME WORDS ----------------
+
 EXTREME_WORDS = [
-    "fuck",
-    "motherfucker",
-    "asshole"
+    "fuck","fucker","motherfucker","fucking","shit","bullshit","bitch","bastard","asshole","dickhead",
+    "piss","slut","whore","cunt","retard","moron","jackass","scumbag","dipshit","jerk",
+    "wtf","stfu","suck","freak","nutcase","psycho","pervert","crap","douche","scum",
+    "filthy","garbage","kill you","shut up","get lost","piece of shit","son of a","dirty pig","ugly pig","low life",
+    "cheap trash","filthy animal","worthless trash","rotten","damn you","bloody hell","hate you","go to hell","screw you","trash bag"
 ]
 
 def normalize_text(text):
     text = text.lower()
-    text = re.sub(r'[^a-z]', '', text)
+    text = re.sub(r'[^a-z\s]', '', text)
     return text
 
 @app.route("/analyze", methods=["POST"])
@@ -133,7 +143,6 @@ def analytics():
         "user_stats": user_stats
     })
 
-# ✅ RESET ANALYTICS (Simple GET)
 @app.route("/reset", methods=["GET"])
 def reset():
     global total_messages, toxic_messages, blocked_messages
